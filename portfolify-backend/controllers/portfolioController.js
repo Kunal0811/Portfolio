@@ -14,7 +14,8 @@ const uploadResume = async (req, res) => {
       return res.status(400).json({ message: "Please upload a PDF file." });
     }
 
-    // 1. Extract raw text from the PDF
+    // 1. Extract raw text from the PDF 
+    // In pdf-parse v2, you pass the buffer to the function directly and await it.
     const pdfData = await pdfParse(req.file.buffer);
     const rawText = pdfData.text;
 
@@ -57,22 +58,21 @@ const uploadResume = async (req, res) => {
     `;
 
     // 3. Send the text to Gemini AI
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
     let aiResponse = result.response.text();
 
-    // 4. Clean the AI response (just in case it adds markdown) and parse it into an object
+    // 4. Clean the AI response and parse it into an object
     aiResponse = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
     const portfolioData = JSON.parse(aiResponse);
 
-    // 5. Save the perfectly formatted AI data to MongoDB, linking it to the logged-in user
+    // 5. Save the data to MongoDB
     const savedPortfolio = await Portfolio.create({
-      user: req.user._id, // This comes from our authMiddleware!
-      template: 'developer', // Default template
+      user: req.user._id,
+      template: 'developer',
       ...portfolioData
     });
 
-    // 6. Send the finished product back to the frontend
     res.status(201).json({
       message: "AI successfully generated your portfolio!",
       portfolio: savedPortfolio
@@ -89,7 +89,6 @@ const uploadResume = async (req, res) => {
 // @access  Private
 const getUserPortfolio = async (req, res) => {
   try {
-    // Find the portfolio where the user field matches the logged-in user's ID
     const portfolio = await Portfolio.findOne({ user: req.user._id });
 
     if (!portfolio) {
@@ -103,5 +102,22 @@ const getUserPortfolio = async (req, res) => {
   }
 };
 
-// Export BOTH functions so the routes file can use them
-module.exports = { uploadResume, getUserPortfolio };
+// @desc    Get a portfolio by User ID (Publicly viewable)
+// @route   GET /api/portfolios/user/:userId
+// @access  Public
+const getPortfolioByUserId = async (req, res) => {
+  try {
+    const portfolio = await Portfolio.findOne({ user: req.params.userId });
+
+    if (!portfolio) {
+      return res.status(404).json({ message: "Portfolio not found." });
+    }
+
+    res.status(200).json(portfolio);
+  } catch (error) {
+    console.error(`Error fetching public portfolio: ${error.message}`);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+module.exports = { uploadResume, getUserPortfolio, getPortfolioByUserId };

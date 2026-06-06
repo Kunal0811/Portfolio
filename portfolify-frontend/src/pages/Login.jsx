@@ -1,69 +1,95 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { LayoutTemplate, Mail, Lock } from 'lucide-react'
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate();
+
+  // Update state when the user types
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Handle the form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      // Send login credentials to the backend
+      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      
+      // Save the VIP badge (JWT Token) to local storage
+      localStorage.setItem('token', response.data.token);
+      
+      // Redirect securely to the dashboard
+      navigate('/dashboard'); 
+    } catch (err) {
+      // Display error if wrong email or password
+      setError(err.response?.data?.message || 'Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={{ marginBottom: '20px' }}>Welcome Back 🔑</h2>
         
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Link to="/" className="text-2xl font-extrabold text-blue-600 flex items-center gap-2">
-            <LayoutTemplate className="w-8 h-8" />
-            Portfolify AI
-          </Link>
-        </div>
-
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">Welcome back</h2>
-
-        {/* Login Form */}
-        <form className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input 
-                type="email" 
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition" 
-                placeholder="you@example.com"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input 
-                type="password" 
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition" 
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          <Link 
-            to="/dashboard"
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 text-center transition"
-            >
-            Sign In
-        </Link>
+        {/* Error Message Box */}
+        {error && <div style={styles.errorBox}>{error}</div>}
+        
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input 
+            type="email" 
+            name="email" 
+            placeholder="Email Address" 
+            value={formData.email} 
+            onChange={handleChange} 
+            required 
+            style={styles.input} 
+          />
+          <input 
+            type="password" 
+            name="password" 
+            placeholder="Password" 
+            value={formData.password} 
+            onChange={handleChange} 
+            required 
+            style={styles.input} 
+          />
+          
+          <button type="submit" disabled={loading} style={styles.button}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-500">
-            Sign up for free
-          </Link>
+        <p style={{ marginTop: '20px', color: '#aaa' }}>
+          Don't have an account yet? <Link to="/register" style={styles.link}>Register here</Link>
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+// Reusing the same clean dark-mode styling from Registration
+const styles = {
+  container: { display: 'flex', justifyContent: 'center', marginTop: '50px' },
+  card: { backgroundColor: '#2a2a40', padding: '40px', borderRadius: '10px', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' },
+  form: { display: 'flex', flexDirection: 'column', gap: '15px' },
+  input: { padding: '12px', borderRadius: '5px', border: '1px solid #444', backgroundColor: '#1e1e2f', color: 'white', fontSize: '16px' },
+  button: { padding: '12px', borderRadius: '5px', border: 'none', backgroundColor: '#61dafb', color: '#000', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' },
+  errorBox: { backgroundColor: '#ff4d4d', color: 'white', padding: '10px', borderRadius: '5px', marginBottom: '15px' },
+  link: { color: '#61dafb', textDecoration: 'none', fontWeight: 'bold' }
+};
+
+export default Login;

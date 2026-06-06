@@ -1,83 +1,106 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { LayoutTemplate, Mail, Lock, User } from 'lucide-react'
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 const Register = () => {
+  // 1. State to hold our form typing
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate();
+
+  // 2. Update state when the user types
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // 3. Handle the form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Prevent the page from refreshing
+    setError('');
+    setLoading(true);
+
+    try {
+      // Send the data to your Node.js backend!
+      const response = await axios.post('http://localhost:5000/api/auth/register', formData);
+      
+      // If successful, save the VIP badge (JWT Token) to the browser's local memory
+      localStorage.setItem('token', response.data.token);
+      
+      // Redirect the user to their dashboard
+      navigate('/dashboard'); 
+    } catch (err) {
+      // If the backend sends an error (like "Email already exists"), display it
+      setError(err.response?.data?.message || 'An error occurred during registration.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={{ marginBottom: '20px' }}>Create an Account 🚀</h2>
         
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Link to="/" className="text-2xl font-extrabold text-blue-600 flex items-center gap-2">
-            <LayoutTemplate className="w-8 h-8" />
-            Portfolify AI
-          </Link>
-        </div>
-
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">Create your account</h2>
-
-        {/* Register Form */}
-        <form className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
-              </div>
-              <input 
-                type="text" 
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition" 
-                placeholder="John Doe"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input 
-                type="email" 
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition" 
-                placeholder="you@example.com"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input 
-                type="password" 
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition" 
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          <Link 
-            to="/dashboard"
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 text-center transition"
-            >
-            Create Account
-            </Link>
+        {/* Display error messages in a red box */}
+        {error && <div style={styles.errorBox}>{error}</div>}
+        
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input 
+            type="text" 
+            name="name" 
+            placeholder="Full Name" 
+            value={formData.name} 
+            onChange={handleChange} 
+            required 
+            style={styles.input} 
+          />
+          <input 
+            type="email" 
+            name="email" 
+            placeholder="Email Address" 
+            value={formData.email} 
+            onChange={handleChange} 
+            required 
+            style={styles.input} 
+          />
+          <input 
+            type="password" 
+            name="password" 
+            placeholder="Password (min 6 characters)" 
+            value={formData.password} 
+            onChange={handleChange} 
+            required 
+            style={styles.input} 
+          />
+          
+          <button type="submit" disabled={loading} style={styles.button}>
+            {loading ? 'Creating Account...' : 'Register'}
+          </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
+        <p style={{ marginTop: '20px', color: '#aaa' }}>
+          Already have an account? <Link to="/login" style={styles.link}>Login here</Link>
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Register
+// Basic inline styling for a clean dark-mode look
+const styles = {
+  container: { display: 'flex', justifyContent: 'center', marginTop: '50px' },
+  card: { backgroundColor: '#2a2a40', padding: '40px', borderRadius: '10px', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' },
+  form: { display: 'flex', flexDirection: 'column', gap: '15px' },
+  input: { padding: '12px', borderRadius: '5px', border: '1px solid #444', backgroundColor: '#1e1e2f', color: 'white', fontSize: '16px' },
+  button: { padding: '12px', borderRadius: '5px', border: 'none', backgroundColor: '#61dafb', color: '#000', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' },
+  errorBox: { backgroundColor: '#ff4d4d', color: 'white', padding: '10px', borderRadius: '5px', marginBottom: '15px' },
+  link: { color: '#61dafb', textDecoration: 'none', fontWeight: 'bold' }
+};
+
+export default Register;

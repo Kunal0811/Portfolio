@@ -1,11 +1,9 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import LandingPage from './pages/LandingPage'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import DeveloperTemplate from './templates/DeveloperTemplate'
-import ModernTemplate from './templates/ModernTemplate' // <-- Add this import
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import Register from './pages/Register';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import PublicPortfolio from './pages/PublicPortfolio'; // <-- Import it here
 
 function App() {
   return (
@@ -15,11 +13,12 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/preview/developer" element={<DeveloperTemplate />} />
-        <Route path="/preview/modern" element={<ModernTemplate />} /> {/* <-- Add this route */}
+        
+        {/* NEW: The Public Portfolio Route */}
+        <Route path="/portfolio/:userId" element={<PublicPortfolio />} />
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
