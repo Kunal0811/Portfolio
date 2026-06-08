@@ -3,93 +3,74 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
   const navigate = useNavigate();
 
-  // Update state when the user types
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Handle the form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    setError(''); setLoading(true);
     try {
-      // Send login credentials to the backend
       const response = await axios.post('http://localhost:5000/api/auth/login', formData);
-      
-      // Save the VIP badge (JWT Token) to local storage
       localStorage.setItem('token', response.data.token);
-      
-      // Redirect securely to the dashboard
-      navigate('/dashboard'); 
+      navigate('/dashboard');
     } catch (err) {
-      // Display error if wrong email or password
       setError(err.response?.data?.message || 'Invalid email or password.');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={{ marginBottom: '20px' }}>Welcome Back 🔑</h2>
-        
-        {/* Error Message Box */}
-        {error && <div style={styles.errorBox}>{error}</div>}
-        
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <input 
-            type="email" 
-            name="email" 
-            placeholder="Email Address" 
-            value={formData.email} 
-            onChange={handleChange} 
-            required 
-            style={styles.input} 
-          />
-          <input 
-            type="password" 
-            name="password" 
-            placeholder="Password" 
-            value={formData.password} 
-            onChange={handleChange} 
-            required 
-            style={styles.input} 
-          />
-          
-          <button type="submit" disabled={loading} style={styles.button}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+    <div style={{ minHeight: '100vh', background: '#06061a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap');
+        * { box-sizing: border-box; }
+        .auth-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px 16px; color: #e2e8f0; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit; }
+        .auth-input::placeholder { color: #475569; }
+        .auth-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .auth-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .auth-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(99,102,241,0.4); }
+        .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
 
-        <p style={{ marginTop: '20px', color: '#aaa' }}>
-          Don't have an account yet? <Link to="/register" style={styles.link}>Register here</Link>
+      <div style={{ width: '100%', maxWidth: '420px', animation: 'fade-in 0.5s ease' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '24px' }}>
+            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✦</div>
+            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, color: '#fff', fontSize: '17px' }}>Portfolify AI</span>
+          </Link>
+          <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '28px', fontWeight: 800, color: '#fff', marginBottom: '8px' }}>Welcome back</h1>
+          <p style={{ color: '#64748b', fontSize: '15px' }}>Sign in to your portfolio dashboard</p>
+        </div>
+
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px', padding: '36px' }}>
+          {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', padding: '12px 16px', color: '#fca5a5', fontSize: '14px', marginBottom: '20px' }}>{error}</div>}
+          
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8', display: 'block', marginBottom: '8px' }}>Email Address</label>
+              <input type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required className="auth-input" />
+            </div>
+            <div>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8', display: 'block', marginBottom: '8px' }}>Password</label>
+              <input type="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required className="auth-input" />
+            </div>
+            <button type="submit" disabled={loading} className="auth-btn" style={{ marginTop: '8px' }}>
+              {loading ? 'Signing in...' : 'Sign In →'}
+            </button>
+          </form>
+        </div>
+
+        <p style={{ textAlign: 'center', marginTop: '24px', color: '#64748b', fontSize: '14px' }}>
+          Don't have an account?{' '}
+          <Link to="/register" style={{ color: '#818cf8', fontWeight: 700, textDecoration: 'none' }}>Create one free →</Link>
         </p>
       </div>
     </div>
   );
-};
-
-// Reusing the same clean dark-mode styling from Registration
-const styles = {
-  container: { display: 'flex', justifyContent: 'center', marginTop: '50px' },
-  card: { backgroundColor: '#2a2a40', padding: '40px', borderRadius: '10px', width: '100%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' },
-  form: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  input: { padding: '12px', borderRadius: '5px', border: '1px solid #444', backgroundColor: '#1e1e2f', color: 'white', fontSize: '16px' },
-  button: { padding: '12px', borderRadius: '5px', border: 'none', backgroundColor: '#61dafb', color: '#000', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' },
-  errorBox: { backgroundColor: '#ff4d4d', color: 'white', padding: '10px', borderRadius: '5px', marginBottom: '15px' },
-  link: { color: '#61dafb', textDecoration: 'none', fontWeight: 'bold' }
 };
 
 export default Login;

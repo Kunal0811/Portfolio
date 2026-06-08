@@ -91,7 +91,7 @@ const PublicPortfolio = () => {
             <div className="space-y-6">
               {portfolioData.experience.map((exp, index) => (
                 <div key={index} className="border-l-2 border-blue-100 pl-4 relative">
-                  <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-1.5 border-2 border-white"></div>
+                  <div className="absolute w-3 h-3 bg-blue-500 rounded-full top-1.5 border-2 border-white"></div>
                   <h4 className="font-bold text-gray-900">{exp.role}</h4>
                   <p className="text-sm font-semibold text-blue-600 mb-2">{exp.company} <span className="text-gray-400 font-normal">• {exp.duration}</span></p>
                   <p className="text-sm text-gray-600">{exp.description}</p>
