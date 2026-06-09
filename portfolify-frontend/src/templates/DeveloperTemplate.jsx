@@ -1,172 +1,178 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Briefcase, Code, ExternalLink, Mail, Globe, Terminal, GraduationCap, Award, Languages, Trophy } from 'lucide-react';
 
 const DeveloperTemplate = ({ data }) => {
-  const [visible, setVisible] = useState(false)
-  useEffect(() => { setTimeout(() => setVisible(true), 50) }, [])
+  if (!data) return null;
 
-  const { personalInfo: pi = {}, skills = [], experience = [], projects = [], education = [], certifications = [], languages = [], achievements = [] } = data
+  const { personalInfo, skills, experience, projects, education, certifications, languages, achievements } = data;
+
+  // Animation variants for cascading text/card entries
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: 'easeOut' } }
+  };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0e1a', color: '#e2e8f0', fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.3); border-radius: 2px; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes fade-up { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes glow-pulse { 0%,100%{box-shadow:0 0 20px rgba(56,189,248,0.2)} 50%{box-shadow:0 0 40px rgba(56,189,248,0.5)} }
-        @keyframes scan { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
-        .fade-up { animation: fade-up 0.7s ease forwards; }
-        .d1{animation-delay:0.1s} .d2{animation-delay:0.2s} .d3{animation-delay:0.3s} .d4{animation-delay:0.4s} .d5{animation-delay:0.5s} .d6{animation-delay:0.6s}
-        .skill-chip { transition: all 0.2s; cursor: default; }
-        .skill-chip:hover { background: rgba(56,189,248,0.2) !important; transform: translateY(-2px); }
-        .proj-card { transition: all 0.25s; }
-        .proj-card:hover { transform: translateY(-4px); border-color: rgba(56,189,248,0.4) !important; }
-        a { color: #38bdf8; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-      `}</style>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="max-w-5xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pb-16"
+    >
+      {/* 1. HERO / PERSONAL INFO CARD */}
+      <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl transform translate-x-10 -translate-y-10"></div>
+        <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">{personalInfo?.name || 'Your Name'}</h2>
+        <p className="text-xl text-blue-600 font-semibold mt-1 mb-4">{personalInfo?.role || 'Software Engineer'}</p>
+        <p className="text-gray-600 leading-relaxed max-w-3xl text-base">{personalInfo?.bio || 'Professional bio summary.'}</p>
+        
+        <div className="flex flex-wrap gap-4 mt-6">
+          {personalInfo?.email && <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100"><Mail className="w-4 h-4 text-gray-400"/> {personalInfo.email}</div>}
+          {personalInfo?.linkedin && <a href={personalInfo.linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl border border-gray-100 transition"><Globe className="w-4 h-4"/> LinkedIn</a>}
+          {personalInfo?.github && <a href={personalInfo.github} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 hover:bg-gray-900 hover:text-white px-4 py-2 rounded-xl border border-gray-100 transition"><Terminal className="w-4 h-4"/> GitHub</a>}
+          {personalInfo?.website && <a href={personalInfo.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl border border-gray-100 transition"><ExternalLink className="w-4 h-4"/> Portfolio Website</a>}
+          {personalInfo?.phone && <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">📱 {personalInfo.phone}</div>}
+          {personalInfo?.location && <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">📍 {personalInfo.location}</div>}
+        </div>
+      </motion.div>
 
-      {/* Scanline effect */}
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.4), transparent)', animation: 'scan 4s linear infinite', zIndex: 50, pointerEvents: 'none' }} />
-
-      {/* Grid background */}
-      <div style={{ position: 'fixed', inset: 0, backgroundImage: 'linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px)', backgroundSize: '40px 40px', zIndex: 0, pointerEvents: 'none' }} />
-
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: '900px', margin: '0 auto', padding: '60px 24px 100px' }}>
-
-        {/* Header */}
-        <header className="fade-up d1" style={{ marginBottom: '64px', opacity: 0 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '4px', padding: '6px 14px', marginBottom: '20px', fontFamily: 'monospace' }}>
-            <span style={{ color: '#38bdf8', fontWeight: 700 }}>{'>_'}</span>
-            <span style={{ color: '#64748b', fontSize: '13px' }}>init portfolio --user="{pi.name || 'Developer'}"</span>
-            <span style={{ color: '#38bdf8', animation: 'blink 1s infinite', fontWeight: 700 }}>█</span>
+      {/* 2. CORE SKILLS */}
+      {skills && skills.length > 0 && (
+        <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><Code className="w-5 h-5 text-blue-600"/> Technical Competencies</h3>
+          <div className="flex flex-wrap gap-2.5">
+            {skills.map((skill, index) => (
+              <motion.span 
+                whileHover={{ scale: 1.05, backgroundColor: '#eff6ff' }}
+                key={index} 
+                className="px-4 py-2 bg-gray-50 text-gray-700 rounded-xl text-sm font-semibold border border-gray-100 cursor-default transition-colors duration-200"
+              >
+                {skill}
+              </motion.span>
+            ))}
           </div>
+        </motion.div>
+      )}
 
-          <h1 style={{ fontSize: 'clamp(36px, 7vw, 72px)', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: '12px' }}>
-            {pi.name || 'Your Name'}
-          </h1>
-          <h2 style={{ fontSize: 'clamp(18px, 3vw, 28px)', color: '#38bdf8', fontWeight: 500, marginBottom: '20px' }}>
-            <span style={{ color: '#475569' }}>// </span>{pi.role || 'Software Engineer'}
-          </h2>
-          <p style={{ fontSize: '16px', color: '#64748b', lineHeight: 1.8, maxWidth: '600px', marginBottom: '28px' }}>{pi.bio}</p>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-            {pi.email && <a href={`mailto:${pi.email}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '8px 14px', color: '#94a3b8', fontSize: '13px', fontWeight: 500 }}>✉ {pi.email}</a>}
-            {pi.github && <a href={pi.github.startsWith('http') ? pi.github : `https://${pi.github}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '6px', padding: '8px 14px', color: '#38bdf8', fontSize: '13px', fontWeight: 600 }}>⌨ GitHub</a>}
-            {pi.linkedin && <a href={pi.linkedin.startsWith('http') ? pi.linkedin : `https://${pi.linkedin}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '6px', padding: '8px 14px', color: '#38bdf8', fontSize: '13px', fontWeight: 600 }}>🔗 LinkedIn</a>}
-            {pi.website && <a href={pi.website.startsWith('http') ? pi.website : `https://${pi.website}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '6px', padding: '8px 14px', color: '#38bdf8', fontSize: '13px', fontWeight: 600 }}>🌐 Website</a>}
-          </div>
-        </header>
-
-        {/* Skills */}
-        {skills.length > 0 && (
-          <section className="fade-up d2" style={{ marginBottom: '56px', opacity: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <span style={{ color: '#38bdf8', fontSize: '18px', fontWeight: 700 }}>{'{ '}</span>
-              <h3 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: 700 }}>skills</h3>
-              <span style={{ color: '#38bdf8', fontSize: '18px', fontWeight: 700 }}>{' }'}</span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              {skills.map((s, i) => (
-                <span key={i} className="skill-chip" style={{ background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', color: '#7dd3fc', fontWeight: 600 }}>{s}</span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Experience */}
-        {experience.length > 0 && (
-          <section className="fade-up d3" style={{ marginBottom: '56px', opacity: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <span style={{ color: '#38bdf8', fontSize: '18px', fontWeight: 700 }}>{'[ '}</span>
-              <h3 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: 700 }}>experience</h3>
-              <span style={{ color: '#38bdf8', fontSize: '18px', fontWeight: 700 }}>{' ]'}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {experience.map((e, i) => (
-                <div key={i} style={{ borderLeft: '2px solid rgba(56,189,248,0.3)', paddingLeft: '20px', position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '-5px', top: '8px', width: '8px', height: '8px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 8px rgba(56,189,248,0.6)' }} />
-                  <div style={{ fontWeight: 700, color: '#f8fafc', fontSize: '16px', marginBottom: '2px' }}>{e.role}</div>
-                  <div style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 600, marginBottom: '8px' }}>{e.company} <span style={{ color: '#475569', fontWeight: 400 }}>• {e.duration}</span></div>
-                  <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.7 }}>{e.description}</p>
+      {/* 3. DYNAMIC WORK & PROJECT SIDE-BY-SIDE PANELS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Work Experience Section (Renders ONLY if data exists) */}
+        {experience && experience.length > 0 ? (
+          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"><Briefcase className="w-5 h-5 text-blue-600"/> Professional Experience</h3>
+            <div className="space-y-6">
+              {experience.map((exp, index) => (
+                <div key={index} className="border-l-2 border-blue-100 pl-4 relative">
+                  <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-1.5 border-2 border-white"></div>
+                  <h4 className="font-bold text-gray-900 text-base">{exp.role}</h4>
+                  <p className="text-sm font-semibold text-blue-600 mb-2">{exp.company} <span className="text-gray-400 font-normal">• {exp.duration}</span></p>
+                  <p className="text-sm text-gray-600 leading-relaxed">{exp.description}</p>
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          </motion.div>
+        ) : null}
 
-        {/* Projects */}
-        {projects.length > 0 && (
-          <section className="fade-up d4" style={{ marginBottom: '56px', opacity: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <span style={{ color: '#38bdf8', fontSize: '18px', fontWeight: 700 }}>{'<'}</span>
-              <h3 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: 700 }}>projects</h3>
-              <span style={{ color: '#38bdf8', fontSize: '18px', fontWeight: 700 }}>{'/>'}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-              {projects.map((p, i) => (
-                <div key={i} className="proj-card" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(56,189,248,0.15)', borderRadius: '12px', padding: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h4 style={{ fontWeight: 700, color: '#f8fafc', fontSize: '15px' }}>{p.title}</h4>
-                    {p.link && <a href={p.link.startsWith('http') ? p.link : `https://${p.link}`} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', fontSize: '16px', flexShrink: 0 }}>↗</a>}
+        {/* Featured Projects Section */}
+        {projects && projects.length > 0 ? (
+          <motion.div 
+            variants={itemVariants} 
+            className={`bg-white rounded-3xl border border-gray-100 p-8 shadow-sm ${(!experience || experience.length === 0) ? 'lg:col-span-2' : ''}`}
+          >
+            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"><ExternalLink className="w-5 h-5 text-blue-600"/> Technical Engineering Projects</h3>
+            <div className="grid grid-cols-1 gap-4">
+              {projects.map((project, index) => (
+                <motion.div 
+                  whileHover={{ y: -4, shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
+                  key={index} 
+                  className="p-5 border border-gray-100 rounded-2xl bg-gray-50/50 hover:bg-white transition-all duration-300 group"
+                >
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">{project.title}</h4>
+                    {project.link && (
+                      <a href={project.link} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors">
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
                   </div>
-                  <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '12px' }}>{p.description}</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {p.tags?.map((t, j) => <span key={j} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>{t}</span>)}
+                  <p className="text-sm text-gray-600 mb-3 leading-relaxed">{project.description}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {project.tags?.map((tag, tIndex) => (
+                      <span key={tIndex} className="px-2.5 py-1 bg-white text-gray-600 border border-gray-100 rounded-lg text-xs font-semibold">{tag}</span>
+                    ))}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </section>
-        )}
+          </motion.div>
+        ) : null}
+      </div>
 
-        {/* Education */}
-        {education.length > 0 && (
-          <section className="fade-up d5" style={{ marginBottom: '40px', opacity: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-              <span style={{ color: '#38bdf8', fontWeight: 700 }}>// </span>
-              <h3 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: 700 }}>education</h3>
-            </div>
-            {education.map((e, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', flexWrap: 'wrap', gap: '8px' }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '14px' }}>{e.degree}</div>
-                  <div style={{ color: '#64748b', fontSize: '13px' }}>{e.school}</div>
-                </div>
-                <span style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '4px', padding: '2px 8px', fontSize: '12px', color: '#38bdf8', fontWeight: 600 }}>{e.year}</span>
+      {/* 4. ACADEMIC EDUCATION HISTORY */}
+      {education && education.length > 0 && (
+        <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"><GraduationCap className="w-6 h-6 text-blue-600"/> Education & Academic Timeline</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {education.map((edu, index) => (
+              <div key={index} className="p-5 border border-gray-50 rounded-2xl bg-gray-50/30">
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">{edu.year}</span>
+                <h4 className="font-bold text-gray-900 mt-3 text-base">{edu.degree}</h4>
+                <p className="text-sm text-gray-500 font-medium mb-2">{edu.school}</p>
+                {edu.description && <p className="text-xs text-gray-500 border-t border-gray-100 pt-2 mt-2 leading-relaxed">{edu.description}</p>}
               </div>
             ))}
-          </section>
+          </div>
+        </motion.div>
+      )}
+
+      {/* 5. ADDITIONAL INFORMATION ACCORDION / GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Certifications Card */}
+        {certifications && certifications.length > 0 && (
+          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm tracking-wide uppercase text-gray-400"><Award className="w-4 h-4 text-blue-500"/> Certifications</h4>
+            <ul className="space-y-2">
+              {certifications.map((cert, index) => (
+                <li key={index} className="text-sm font-semibold text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-50/50">🛡️ {cert}</li>
+              ))}
+            </ul>
+          </motion.div>
         )}
 
-        {/* Extras row */}
-        {(certifications.length > 0 || languages.length > 0 || achievements.length > 0) && (
-          <section className="fade-up d6" style={{ opacity: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-            {certifications.length > 0 && (
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '20px' }}>
-                <div style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '12px' }}>CERTIFICATIONS</div>
-                {certifications.map((c, i) => <div key={i} style={{ color: '#64748b', fontSize: '13px', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>▸ {c}</div>)}
-              </div>
-            )}
-            {languages.length > 0 && (
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '20px' }}>
-                <div style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '12px' }}>LANGUAGES</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {languages.map((l, i) => <span key={i} style={{ background: 'rgba(56,189,248,0.08)', borderRadius: '4px', padding: '3px 10px', fontSize: '12px', color: '#7dd3fc', fontWeight: 600 }}>{l}</span>)}
-                </div>
-              </div>
-            )}
-            {achievements.length > 0 && (
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '20px' }}>
-                <div style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '12px' }}>ACHIEVEMENTS</div>
-                {achievements.map((a, i) => <div key={i} style={{ color: '#64748b', fontSize: '13px', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>🏆 {a}</div>)}
-              </div>
-            )}
-          </section>
+        {/* Achievements Card */}
+        {achievements && achievements.length > 0 && (
+          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm tracking-wide uppercase text-gray-400"><Trophy className="w-4 h-4 text-amber-500"/> Achievements</h4>
+            <ul className="space-y-2">
+              {achievements.map((ach, index) => (
+                <li key={index} className="text-sm font-semibold text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-50/50">✨ {ach}</li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+
+        {/* Languages Card */}
+        {languages && languages.length > 0 && (
+          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm tracking-wide uppercase text-gray-400"><Languages className="w-4 h-4 text-emerald-500"/> Languages</h4>
+            <div className="flex flex-wrap gap-2">
+              {languages.map((lang, index) => (
+                <span key={index} className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-xl">{lang}</span>
+              ))}
+            </div>
+          </motion.div>
         )}
       </div>
-    </div>
-  )
-}
+    </motion.div>
+  );
+};
 
-export default DeveloperTemplate
+export default DeveloperTemplate;
