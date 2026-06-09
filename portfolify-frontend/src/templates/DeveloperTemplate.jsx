@@ -1,177 +1,356 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Briefcase, Code, ExternalLink, Mail, Globe, Terminal, GraduationCap, Award, Languages, Trophy } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
 const DeveloperTemplate = ({ data }) => {
   if (!data) return null;
+  const { personalInfo: pi = {}, skills = [], experience = [], projects = [], education = [], certifications = [], languages = [], achievements = [] } = data;
 
-  const { personalInfo, skills, experience, projects, education, certifications, languages, achievements } = data;
+  const [activeSection, setActiveSection] = useState('home');
+  const [typedText, setTypedText] = useState('');
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [terminalLines, setTerminalLines] = useState([]);
+  const [hoveredProject, setHoveredProject] = useState(null);
+  const sectionRefs = useRef({});
+  const containerRef = useRef(null);
 
-  // Animation variants for cascading text/card entries
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  const sections = [
+    { id: 'home', label: '~/', icon: '❯' },
+    { id: 'skills', label: 'skills/', icon: '{}' },
+    { id: 'experience', label: 'work/', icon: '[]' },
+    { id: 'projects', label: 'projects/', icon: '</>' },
+    { id: 'education', label: 'edu/', icon: '#' },
+  ].filter(s => {
+    if (s.id === 'experience') return experience.length > 0;
+    if (s.id === 'projects') return projects.length > 0;
+    if (s.id === 'education') return education.length > 0;
+    if (s.id === 'skills') return skills.length > 0;
+    return true;
+  });
+
+  // Typing animation
+  const fullText = pi.role || 'Software Engineer';
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i <= fullText.length) { setTypedText(fullText.slice(0, i)); i++; }
+      else clearInterval(interval);
+    }, 60);
+    return () => clearInterval(interval);
+  }, [fullText]);
+
+  // Cursor blink
+  useEffect(() => {
+    const t = setInterval(() => setCursorVisible(v => !v), 530);
+    return () => clearInterval(t);
+  }, []);
+
+  // Terminal boot sequence
+  useEffect(() => {
+    const lines = [
+      { text: '$ init portfolio --user="' + (pi.name || 'Developer') + '"', delay: 200 },
+      { text: '✓ Loading profile data...', delay: 600 },
+      { text: '✓ ' + skills.length + ' skills indexed', delay: 1000 },
+      { text: '✓ ' + experience.length + ' roles found', delay: 1400 },
+      { text: '✓ ' + projects.length + ' projects deployed', delay: 1800 },
+      { text: '✓ Portfolio ready.', delay: 2200 },
+    ];
+    lines.forEach(({ text, delay }) => {
+      setTimeout(() => setTerminalLines(prev => [...prev, text]), delay);
+    });
+  }, []);
+
+  // Scroll spy
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) setActiveSection(e.target.id); }),
+      { threshold: 0.4, rootMargin: '-10% 0px -50% 0px' }
+    );
+    sections.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [sections.length]);
+
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: 'easeOut' } }
+  const skillCategories = {
+    'Languages': skills.filter(s => ['JavaScript','TypeScript','Python','Java','Go','Rust','C++','C#','Ruby','PHP','Swift','Kotlin'].some(l => s.toLowerCase().includes(l.toLowerCase()))),
+    'Frameworks': skills.filter(s => ['React','Vue','Angular','Next','Nuxt','Express','Django','Flask','Spring','Laravel','Rails'].some(l => s.toLowerCase().includes(l.toLowerCase()))),
+    'Tools': skills.filter(s => !['JavaScript','TypeScript','Python','Java','Go','Rust','C++','C#','Ruby','PHP','Swift','Kotlin','React','Vue','Angular','Next','Nuxt','Express','Django','Flask','Spring','Laravel','Rails'].some(l => s.toLowerCase().includes(l.toLowerCase()))),
   };
+  // Flatten uncategorized back into whichever bucket works
+  const allCategorized = Object.values(skillCategories).flat();
+  const uncategorized = skills.filter(s => !allCategorized.includes(s));
+  if (uncategorized.length > 0) skillCategories['Tools'] = [...skillCategories['Tools'], ...uncategorized];
+  const cleanCategories = Object.entries(skillCategories).filter(([,v]) => v.length > 0);
 
   return (
-    <motion.div 
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="max-w-5xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pb-16"
-    >
-      {/* 1. HERO / PERSONAL INFO CARD */}
-      <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl transform translate-x-10 -translate-y-10"></div>
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">{personalInfo?.name || 'Your Name'}</h2>
-        <p className="text-xl text-blue-600 font-semibold mt-1 mb-4">{personalInfo?.role || 'Software Engineer'}</p>
-        <p className="text-gray-600 leading-relaxed max-w-3xl text-base">{personalInfo?.bio || 'Professional bio summary.'}</p>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#080c14', color: '#cdd6f4', fontFamily: "'JetBrains Mono', 'Fira Code', monospace", overflowX: 'hidden' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-track { background: #0d1117; } ::-webkit-scrollbar-thumb { background: #313244; border-radius: 2px; }
         
-        <div className="flex flex-wrap gap-4 mt-6">
-          {personalInfo?.email && <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100"><Mail className="w-4 h-4 text-gray-400"/> {personalInfo.email}</div>}
-          {personalInfo?.linkedin && <a href={personalInfo.linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl border border-gray-100 transition"><Globe className="w-4 h-4"/> LinkedIn</a>}
-          {personalInfo?.github && <a href={personalInfo.github} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 hover:bg-gray-900 hover:text-white px-4 py-2 rounded-xl border border-gray-100 transition"><Terminal className="w-4 h-4"/> GitHub</a>}
-          {personalInfo?.website && <a href={personalInfo.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 px-4 py-2 rounded-xl border border-gray-100 transition"><ExternalLink className="w-4 h-4"/> Portfolio Website</a>}
-          {personalInfo?.phone && <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">📱 {personalInfo.phone}</div>}
-          {personalInfo?.location && <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">📍 {personalInfo.location}</div>}
+        .nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: #6c7086; border: none; background: transparent; font-family: inherit; text-align: left; transition: all 0.2s; }
+        .nav-item:hover { color: #89b4fa; background: rgba(137,180,250,0.06); }
+        .nav-item.active { color: #89b4fa; background: rgba(137,180,250,0.1); border-left: 2px solid #89b4fa; }
+        .nav-icon { font-size: 11px; font-weight: 700; color: #89b4fa; width: 24px; text-align: center; flex-shrink: 0; }
+
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+        @keyframes glow { 0%,100%{opacity:.4} 50%{opacity:1} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+        .section-title { font-size: 11px; font-weight: 700; color: #89b4fa; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
+        .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(137,180,250,0.3), transparent); }
+
+        .skill-chip { background: rgba(137,180,250,0.06); border: 1px solid rgba(137,180,250,0.15); border-radius: 6px; padding: 6px 14px; font-size: 12px; color: #89b4fa; font-weight: 500; transition: all 0.2s; cursor: default; display: inline-block; }
+        .skill-chip:hover { background: rgba(137,180,250,0.15); border-color: rgba(137,180,250,0.4); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(137,180,250,0.15); }
+
+        .timeline-item { border-left: 1px solid rgba(137,180,250,0.2); padding-left: 24px; position: relative; padding-bottom: 32px; }
+        .timeline-item:last-child { padding-bottom: 0; border-color: transparent; }
+        .timeline-dot { position: absolute; left: -5px; top: 0; width: 9px; height: 9px; border-radius: 50%; background: #89b4fa; box-shadow: 0 0 0 3px rgba(137,180,250,0.15), 0 0 12px rgba(137,180,250,0.4); }
+
+        .project-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 28px; transition: all 0.3s; position: relative; overflow: hidden; cursor: default; }
+        .project-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(137,180,250,0.05) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; }
+        .project-card:hover { border-color: rgba(137,180,250,0.3); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(137,180,250,0.1); }
+        .project-card:hover::before { opacity: 1; }
+
+        .terminal-window { background: #0d1117; border: 1px solid #21262d; border-radius: 12px; overflow: hidden; }
+        .terminal-bar { background: #161b22; border-bottom: 1px solid #21262d; padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-line { font-size: 13px; line-height: 1.8; color: #8b949e; padding: 2px 0; }
+        .terminal-line.success { color: #3fb950; }
+        .terminal-line.cmd { color: #58a6ff; }
+        .terminal-prompt { color: #3fb950; margin-right: 8px; }
+
+        .edu-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; transition: all 0.2s; }
+        .edu-card:hover { border-color: rgba(137,180,250,0.2); background: rgba(137,180,250,0.03); }
+
+        .contact-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; text-decoration: none; color: #8b949e; font-size: 13px; transition: all 0.2s; font-family: inherit; }
+        .contact-item:hover { border-color: rgba(137,180,250,0.3); color: #89b4fa; background: rgba(137,180,250,0.05); }
+
+        .section-wrap { min-height: 100vh; padding: 80px 60px; display: flex; flex-direction: column; justify-content: center; }
+        @media(max-width:768px) { .section-wrap { padding: 60px 24px; } }
+      `}</style>
+
+      {/* Scanline overlay */}
+      <div style={{ position: 'fixed', inset: 0, background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)', pointerEvents: 'none', zIndex: 1, opacity: 0.5 }} />
+
+      {/* Fixed sidebar */}
+      <aside style={{ position: 'fixed', top: 0, left: 0, width: '220px', height: '100vh', background: 'rgba(13,17,23,0.95)', borderRight: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', display: 'flex', flexDirection: 'column', padding: '32px 16px', zIndex: 100 }}>
+        {/* Logo */}
+        <div style={{ marginBottom: '40px', paddingLeft: '4px' }}>
+          <div style={{ fontSize: '11px', color: '#3fb950', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '4px' }}>PORTFOLIO v2.0</div>
+          <div style={{ fontSize: '15px', fontWeight: 700, color: '#cdd6f4', letterSpacing: '-0.01em' }}>{pi.name?.split(' ')[0] || 'Dev'}<span style={{ color: '#89b4fa' }}>.</span></div>
         </div>
-      </motion.div>
 
-      {/* 2. CORE SKILLS */}
-      {skills && skills.length > 0 && (
-        <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><Code className="w-5 h-5 text-blue-600"/> Technical Competencies</h3>
-          <div className="flex flex-wrap gap-2.5">
-            {skills.map((skill, index) => (
-              <motion.span 
-                whileHover={{ scale: 1.05, backgroundColor: '#eff6ff' }}
-                key={index} 
-                className="px-4 py-2 bg-gray-50 text-gray-700 rounded-xl text-sm font-semibold border border-gray-100 cursor-default transition-colors duration-200"
-              >
-                {skill}
-              </motion.span>
-            ))}
+        {/* Nav */}
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {sections.map(s => (
+            <button key={s.id} onClick={() => scrollTo(s.id)} className={`nav-item ${activeSection === s.id ? 'active' : ''}`}>
+              <span className="nav-icon">{s.icon}</span>
+              {s.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Status */}
+        <div style={{ padding: '12px 16px', background: 'rgba(63,185,80,0.06)', border: '1px solid rgba(63,185,80,0.15)', borderRadius: '8px', marginTop: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3fb950', animation: 'glow 2s infinite' }} />
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#3fb950', letterSpacing: '0.1em' }}>AVAILABLE</span>
           </div>
-        </motion.div>
-      )}
+          <div style={{ fontSize: '11px', color: '#6c7086' }}>Open to opportunities</div>
+        </div>
+      </aside>
 
-      {/* 3. DYNAMIC WORK & PROJECT SIDE-BY-SIDE PANELS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Work Experience Section (Renders ONLY if data exists) */}
-        {experience && experience.length > 0 ? (
-          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"><Briefcase className="w-5 h-5 text-blue-600"/> Professional Experience</h3>
-            <div className="space-y-6">
-              {experience.map((exp, index) => (
-                <div key={index} className="border-l-2 border-blue-100 pl-4 relative">
-                  <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-1.5 border-2 border-white"></div>
-                  <h4 className="font-bold text-gray-900 text-base">{exp.role}</h4>
-                  <p className="text-sm font-semibold text-blue-600 mb-2">{exp.company} <span className="text-gray-400 font-normal">• {exp.duration}</span></p>
-                  <p className="text-sm text-gray-600 leading-relaxed">{exp.description}</p>
+      {/* Main content */}
+      <main style={{ marginLeft: '220px', flex: 1, position: 'relative', zIndex: 2 }}>
+
+        {/* ── HERO ── */}
+        <section id="home" className="section-wrap" style={{ position: 'relative', overflow: 'hidden' }}>
+          {/* Background grid */}
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(137,180,250,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(137,180,250,0.04) 1px, transparent 1px)', backgroundSize: '40px 40px', zIndex: 0 }} />
+          {/* Glow */}
+          <div style={{ position: 'absolute', top: '30%', left: '-10%', width: '500px', height: '400px', background: 'radial-gradient(ellipse, rgba(137,180,250,0.06) 0%, transparent 70%)', zIndex: 0 }} />
+
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: '700px' }}>
+            
+
+            <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}
+              style={{ fontSize: 'clamp(40px, 5vw, 68px)', fontWeight: 800, color: '#cdd6f4', lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: '16px' }}>
+              {pi.name || 'Your Name'}
+            </motion.h1>
+
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+              style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', color: '#89b4fa', fontWeight: 500, marginBottom: '24px', minHeight: '1.4em' }}>
+              <span style={{ color: '#6c7086' }}>// </span>{typedText}<span style={{ opacity: cursorVisible ? 1 : 0, color: '#89b4fa' }}>█</span>
+            </motion.div>
+
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+              style={{ fontSize: '16px', color: '#6c7086', lineHeight: 1.8, maxWidth: '540px', marginBottom: '40px' }}>
+              {pi.bio}
+            </motion.p>
+
+            {/* Contact links */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '56px' }}>
+              {pi.email && <a href={`mailto:${pi.email}`} className="contact-item">✉ {pi.email}</a>}
+              {pi.github && <a href={pi.github.startsWith('http') ? pi.github : `https://${pi.github}`} target="_blank" rel="noreferrer" className="contact-item">⌨ GitHub ↗</a>}
+              {pi.linkedin && <a href={pi.linkedin.startsWith('http') ? pi.linkedin : `https://${pi.linkedin}`} target="_blank" rel="noreferrer" className="contact-item">🔗 LinkedIn ↗</a>}
+              {pi.website && <a href={pi.website.startsWith('http') ? pi.website : `https://${pi.website}`} target="_blank" rel="noreferrer" className="contact-item">🌐 Website ↗</a>}
+              {pi.location && <span className="contact-item">📍 {pi.location}</span>}
+            </motion.div>
+
+            
+          </div>
+        </section>
+
+        {/* ── SKILLS ── */}
+        {skills.length > 0 && (
+          <section id="skills" className="section-wrap" style={{ background: 'rgba(255,255,255,0.01)' }}>
+            <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}>
+              <div className="section-title">Technical Skills</div>
+
+              {cleanCategories.length > 1 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '720px' }}>
+                  {cleanCategories.map(([cat, catSkills]) => (
+                    <div key={cat}>
+                      <div style={{ fontSize: '11px', color: '#6c7086', fontWeight: 600, letterSpacing: '0.1em', marginBottom: '14px' }}>{cat.toUpperCase()}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {catSkills.map((s, i) => (
+                          <motion.span key={i} className="skill-chip"
+                            initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
+                            transition={{ delay: i * 0.04 }}>
+                            {s}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </motion.div>
-        ) : null}
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxWidth: '720px' }}>
+                  {skills.map((s, i) => (
+                    <motion.span key={i} className="skill-chip"
+                      initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
+                      transition={{ delay: i * 0.04 }}>
+                      {s}
+                    </motion.span>
+                  ))}
+                </div>
+              )}
 
-        {/* Featured Projects Section */}
-        {projects && projects.length > 0 ? (
-          <motion.div 
-            variants={itemVariants} 
-            className={`bg-white rounded-3xl border border-gray-100 p-8 shadow-sm ${(!experience || experience.length === 0) ? 'lg:col-span-2' : ''}`}
-          >
-            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"><ExternalLink className="w-5 h-5 text-blue-600"/> Technical Engineering Projects</h3>
-            <div className="grid grid-cols-1 gap-4">
-              {projects.map((project, index) => (
-                <motion.div 
-                  whileHover={{ y: -4, shadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)' }}
-                  key={index} 
-                  className="p-5 border border-gray-100 rounded-2xl bg-gray-50/50 hover:bg-white transition-all duration-300 group"
-                >
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">{project.title}</h4>
-                    {project.link && (
-                      <a href={project.link} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-blue-600 transition-colors">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3 leading-relaxed">{project.description}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {project.tags?.map((tag, tIndex) => (
-                      <span key={tIndex} className="px-2.5 py-1 bg-white text-gray-600 border border-gray-100 rounded-lg text-xs font-semibold">{tag}</span>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        ) : null}
-      </div>
+              {/* Extras row */}
+              {(certifications.length > 0 || languages.length > 0 || achievements.length > 0) && (
+                <div style={{ marginTop: '48px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', maxWidth: '720px' }}>
+                  {certifications.length > 0 && (
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '18px' }}>
+                      <div style={{ fontSize: '10px', color: '#89b4fa', fontWeight: 700, letterSpacing: '0.12em', marginBottom: '10px' }}>CERTIFICATIONS</div>
+                      {certifications.map((c, i) => <div key={i} style={{ fontSize: '12px', color: '#6c7086', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>▸ {c}</div>)}
+                    </div>
+                  )}
+                  {languages.length > 0 && (
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '18px' }}>
+                      <div style={{ fontSize: '10px', color: '#89b4fa', fontWeight: 700, letterSpacing: '0.12em', marginBottom: '10px' }}>LANGUAGES</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {languages.map((l, i) => <span key={i} style={{ background: 'rgba(137,180,250,0.08)', border: '1px solid rgba(137,180,250,0.2)', borderRadius: '4px', padding: '3px 10px', fontSize: '12px', color: '#89b4fa' }}>{l}</span>)}
+                      </div>
+                    </div>
+                  )}
+                  {achievements.length > 0 && (
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '18px' }}>
+                      <div style={{ fontSize: '10px', color: '#89b4fa', fontWeight: 700, letterSpacing: '0.12em', marginBottom: '10px' }}>ACHIEVEMENTS</div>
+                      {achievements.map((a, i) => <div key={i} style={{ fontSize: '12px', color: '#6c7086', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>🏆 {a}</div>)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </section>
+        )}
 
-      {/* 4. ACADEMIC EDUCATION HISTORY */}
-      {education && education.length > 0 && (
-        <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2"><GraduationCap className="w-6 h-6 text-blue-600"/> Education & Academic Timeline</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {education.map((edu, index) => (
-              <div key={index} className="p-5 border border-gray-50 rounded-2xl bg-gray-50/30">
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">{edu.year}</span>
-                <h4 className="font-bold text-gray-900 mt-3 text-base">{edu.degree}</h4>
-                <p className="text-sm text-gray-500 font-medium mb-2">{edu.school}</p>
-                {edu.description && <p className="text-xs text-gray-500 border-t border-gray-100 pt-2 mt-2 leading-relaxed">{edu.description}</p>}
+        {/* ── EXPERIENCE ── */}
+        {experience.length > 0 && (
+          <section id="experience" className="section-wrap">
+            <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.1 }} transition={{ duration: 0.6 }}>
+              <div className="section-title">Work Experience</div>
+              <div style={{ maxWidth: '680px' }}>
+                {experience.map((e, i) => (
+                  <motion.div key={i} className="timeline-item"
+                    initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}>
+                    <div className="timeline-dot" />
+                    <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                      <div>
+                        <div style={{ fontSize: '17px', fontWeight: 700, color: '#cdd6f4', marginBottom: '2px' }}>{e.role}</div>
+                        <div style={{ fontSize: '13px', color: '#89b4fa', fontWeight: 500 }}>{e.company}</div>
+                      </div>
+                      <span style={{ background: 'rgba(137,180,250,0.08)', border: '1px solid rgba(137,180,250,0.15)', borderRadius: '4px', padding: '3px 10px', fontSize: '11px', color: '#6c7086', fontWeight: 500, whiteSpace: 'nowrap' }}>{e.duration}</span>
+                    </div>
+                    <p style={{ fontSize: '14px', color: '#6c7086', lineHeight: 1.8, marginTop: '8px' }}>{e.description}</p>
+                  </motion.div>
+                ))}
               </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* 5. ADDITIONAL INFORMATION ACCORDION / GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Certifications Card */}
-        {certifications && certifications.length > 0 && (
-          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm tracking-wide uppercase text-gray-400"><Award className="w-4 h-4 text-blue-500"/> Certifications</h4>
-            <ul className="space-y-2">
-              {certifications.map((cert, index) => (
-                <li key={index} className="text-sm font-semibold text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-50/50">🛡️ {cert}</li>
-              ))}
-            </ul>
-          </motion.div>
+            </motion.div>
+          </section>
         )}
 
-        {/* Achievements Card */}
-        {achievements && achievements.length > 0 && (
-          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm tracking-wide uppercase text-gray-400"><Trophy className="w-4 h-4 text-amber-500"/> Achievements</h4>
-            <ul className="space-y-2">
-              {achievements.map((ach, index) => (
-                <li key={index} className="text-sm font-semibold text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-50/50">✨ {ach}</li>
-              ))}
-            </ul>
-          </motion.div>
+        {/* ── PROJECTS ── */}
+        {projects.length > 0 && (
+          <section id="projects" className="section-wrap" style={{ background: 'rgba(255,255,255,0.01)' }}>
+            <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.1 }} transition={{ duration: 0.6 }}>
+              <div className="section-title">Featured Projects</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', maxWidth: '900px' }}>
+                {projects.map((p, i) => (
+                  <motion.div key={i} className="project-card"
+                    initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                    whileHover={{ y: -4 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div style={{ fontSize: '11px', color: '#3fb950', fontWeight: 700, letterSpacing: '0.08em' }}>PROJECT_{String(i + 1).padStart(2, '0')}</div>
+                      {p.link && (
+                        <a href={p.link.startsWith('http') ? p.link : `https://${p.link}`} target="_blank" rel="noreferrer"
+                          style={{ color: '#6c7086', fontSize: '16px', textDecoration: 'none', transition: 'color 0.2s' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#89b4fa'} onMouseLeave={e => e.currentTarget.style.color = '#6c7086'}>↗</a>
+                      )}
+                    </div>
+                    <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#cdd6f4', marginBottom: '10px', letterSpacing: '-0.01em' }}>{p.title}</h3>
+                    <p style={{ fontSize: '13px', color: '#6c7086', lineHeight: 1.75, marginBottom: '16px' }}>{p.description}</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {p.tags?.map((t, j) => (
+                        <span key={j} style={{ background: 'rgba(137,180,250,0.06)', border: '1px solid rgba(137,180,250,0.12)', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', color: '#89b4fa', fontWeight: 500 }}>{t}</span>
+                      ))}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </section>
         )}
 
-        {/* Languages Card */}
-        {languages && languages.length > 0 && (
-          <motion.div variants={itemVariants} className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm tracking-wide uppercase text-gray-400"><Languages className="w-4 h-4 text-emerald-500"/> Languages</h4>
-            <div className="flex flex-wrap gap-2">
-              {languages.map((lang, index) => (
-                <span key={index} className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-xl">{lang}</span>
-              ))}
-            </div>
-          </motion.div>
+        {/* ── EDUCATION ── */}
+        {education.length > 0 && (
+          <section id="education" className="section-wrap">
+            <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.6 }}>
+              <div className="section-title">Education</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', maxWidth: '720px' }}>
+                {education.map((e, i) => (
+                  <motion.div key={i} className="edu-card"
+                    initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
+                    <div style={{ fontSize: '11px', color: '#3fb950', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '10px' }}>{e.year}</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#cdd6f4', marginBottom: '4px' }}>{e.degree}</div>
+                    <div style={{ fontSize: '13px', color: '#6c7086' }}>{e.school}</div>
+                    {e.description && <div style={{ fontSize: '12px', color: '#6c7086', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.04)', lineHeight: 1.6 }}>{e.description}</div>}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </section>
         )}
-      </div>
-    </motion.div>
+      </main>
+    </div>
   );
 };
 

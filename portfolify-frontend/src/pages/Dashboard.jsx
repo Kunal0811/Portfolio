@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
-import DeveloperTemplate from '../templates/DeveloperTemplate';
 
 const API = 'http://localhost:5000'
 
@@ -552,9 +551,100 @@ const Dashboard = () => {
                 <button onClick={() => setActiveTab('build')} className="primary-btn">Build My Portfolio →</button>
               </div>
             ) : portfolio && (
-              <div className="slide-in" style={{ background: '#f3f4f6', borderRadius: '24px', padding: '16px', border: '1px solid #e5e7eb' }}>
-                {/* Dynamically Injecting the Clean Data-Driven Core View */}
-                <DeveloperTemplate data={portfolio} />
+              <div className="slide-in fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '820px' }}>
+
+                {/* Hero card */}
+                <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '24px', padding: '32px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                    <div>
+                      <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: '32px', fontWeight: 800, color: '#fff', marginBottom: '4px', letterSpacing: '-0.02em' }}>{portfolio.personalInfo?.name}</h2>
+                      <p style={{ fontSize: '17px', fontWeight: 600, color: '#818cf8' }}>{portfolio.personalInfo?.role}</p>
+                    </div>
+                    <span style={{ background: portfolio.inputMethod === 'resume' ? 'rgba(16,185,129,0.1)' : 'rgba(99,102,241,0.1)', border: `1px solid ${portfolio.inputMethod === 'resume' ? 'rgba(16,185,129,0.25)' : 'rgba(99,102,241,0.25)'}`, borderRadius: '8px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, color: portfolio.inputMethod === 'resume' ? '#34d399' : '#818cf8', letterSpacing: '0.06em' }}>
+                      {portfolio.inputMethod === 'resume' ? '⚡ AI GENERATED' : '📝 MANUAL'}
+                    </span>
+                  </div>
+                  <p style={{ color: '#94a3b8', lineHeight: 1.7, fontSize: '15px', marginBottom: '20px' }}>{portfolio.personalInfo?.bio}</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    {portfolio.personalInfo?.email && <span style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', color: '#94a3b8' }}>✉ {portfolio.personalInfo.email}</span>}
+                    {portfolio.personalInfo?.location && <span style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', color: '#94a3b8' }}>📍 {portfolio.personalInfo.location}</span>}
+                    {portfolio.personalInfo?.github && <span style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', color: '#94a3b8' }}>⌨ GitHub</span>}
+                    {portfolio.personalInfo?.linkedin && <span style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', color: '#94a3b8' }}>🔗 LinkedIn</span>}
+                  </div>
+                </div>
+
+                {/* Skills */}
+                {portfolio.skills?.length > 0 && (
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px', padding: '24px' }}>
+                    <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#475569', letterSpacing: '0.1em', marginBottom: '14px' }}>SKILLS — {portfolio.skills.length} total</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {portfolio.skills.map((s, i) => (
+                        <span key={i} style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '8px', padding: '5px 12px', fontSize: '13px', color: '#a5b4fc', fontWeight: 500 }}>{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: portfolio.experience?.length > 0 && portfolio.projects?.length > 0 ? '1fr 1fr' : '1fr', gap: '20px' }}>
+                  {/* Experience */}
+                  {portfolio.experience?.length > 0 && (
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px', padding: '24px' }}>
+                      <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#475569', letterSpacing: '0.1em', marginBottom: '16px' }}>EXPERIENCE — {portfolio.experience.length} role{portfolio.experience.length > 1 ? 's' : ''}</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {portfolio.experience.map((e, i) => (
+                          <div key={i} style={{ borderLeft: '2px solid rgba(99,102,241,0.3)', paddingLeft: '14px', position: 'relative' }}>
+                            <div style={{ position: 'absolute', left: '-5px', top: '5px', width: '8px', height: '8px', borderRadius: '50%', background: '#6366f1' }} />
+                            <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '14px' }}>{e.role}</div>
+                            <div style={{ fontSize: '12px', color: '#6366f1', fontWeight: 600, marginBottom: '4px' }}>{e.company} <span style={{ color: '#475569', fontWeight: 400 }}>· {e.duration}</span></div>
+                            <p style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.6 }}>{e.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Projects */}
+                  {portfolio.projects?.length > 0 && (
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px', padding: '24px' }}>
+                      <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#475569', letterSpacing: '0.1em', marginBottom: '16px' }}>PROJECTS — {portfolio.projects.length} project{portfolio.projects.length > 1 ? 's' : ''}</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {portfolio.projects.map((p, i) => (
+                          <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px' }}>
+                            <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '14px', marginBottom: '4px' }}>{p.title}</div>
+                            <p style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.5, marginBottom: '8px' }}>{p.description}</p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              {p.tags?.map((t, j) => <span key={j} style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '4px', padding: '2px 7px', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>{t}</span>)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Education */}
+                {portfolio.education?.length > 0 && (
+                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px', padding: '24px' }}>
+                    <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#475569', letterSpacing: '0.1em', marginBottom: '16px' }}>EDUCATION</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {portfolio.education.map((e, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '14px' }}>{e.degree}</div>
+                            <div style={{ fontSize: '13px', color: '#64748b' }}>{e.school}</div>
+                          </div>
+                          {e.year && <span style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '6px', padding: '2px 8px', fontSize: '12px', color: '#34d399', fontWeight: 600 }}>{e.year}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* View live CTA */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '4px' }}>
+                  <a href={`/portfolio/${portfolio.user}`} target="_blank" rel="noopener noreferrer" className="primary-btn" style={{ textDecoration: 'none' }}>↗ View Live Portfolio</a>
+                  <button onClick={() => setActiveTab('templates')} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '13px 24px', color: '#94a3b8', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>🎨 Change Template</button>
+                </div>
               </div>
             )}
           </div>

@@ -3,9 +3,10 @@ import LandingPage from './pages/LandingPage';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import PublicPortfolio from './pages/PublicPortfolio'; // <-- Import it here
-import DeveloperPortfolio from './templates/DeveloperTemplate';
-import ModernPortfolio from './templates/ModernTemplate';
+import PublicPortfolio from './pages/PublicPortfolio';
+import DeveloperTemplate from './templates/DeveloperTemplate';
+import ModernTemplate from './templates/ModernTemplate';
+import CreativeTemplate from './templates/CreativeTemplate';
 
 function App() {
   return (
@@ -15,12 +16,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        
-        {/* NEW: The Public Portfolio Route */}
         <Route path="/portfolio/:userId" element={<PublicPortfolio />} />
-        {/* Template Previews */}
-        <Route path="/template/developer" element={<DeveloperPortfolio />} />
-        <Route path="/template/modern" element={<ModernPortfolio />} />
+        {/* Template preview routes */}
+        <Route path="/template/developer" element={<DeveloperTemplate />} />
+        <Route path="/template/modern" element={<ModernTemplate />} />
+        <Route path="/template/creative" element={<CreativeTemplate />} />
       </Routes>
     </Router>
   );
