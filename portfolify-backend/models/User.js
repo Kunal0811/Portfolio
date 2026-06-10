@@ -9,7 +9,15 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true, // No two users can have the same email
+    unique: true,
+  },
+  username: {
+    type: String,
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    trim: true,
+    match: [/^[a-z0-9_-]{3,30}$/, 'Username must be 3-30 lowercase alphanumeric characters'],
   },
   password: {
     type: String,
@@ -17,14 +25,8 @@ const userSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// SECURITY: Hash the password before saving it to the database
 userSchema.pre('save', async function (next) {
-  // If the password hasn't been changed/created, skip this
-  if (!this.isModified('password')) {
-    return next();
-  }
-  
-  // Generate a random "salt" and scramble the password
+  if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
