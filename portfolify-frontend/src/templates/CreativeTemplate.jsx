@@ -482,5 +482,4 @@ const CreativeTemplate = ({ data }) => {
     </div>
   );
 };
-
 export default CreativeTemplate;
